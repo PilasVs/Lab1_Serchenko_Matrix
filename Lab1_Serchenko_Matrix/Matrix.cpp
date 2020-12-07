@@ -1,12 +1,23 @@
 #include "Matrix.h"
 #include <algorithm>
 
-
 int Matrix::GetRows() const {
 	return _rows;
 }
+
 int Matrix::GetCols() const {
 	return _cols;
+}
+
+void Matrix::Randomize() const
+{
+	for (int i = 0; i < _rows; i++)
+	{
+		for (int j = 0; j < _cols; j++)
+		{
+			_Matrix[i][j] = std::rand();
+		}
+	}
 }
 
 Matrix& Matrix::operator~()
@@ -23,24 +34,28 @@ Matrix& Matrix::operator~()
 	}
 	else
 	{
-		std::swap(_rows, _cols);
-		int i;
-		double** _NewMatrix = new double* [_rows];
-		for (i = 0; i < _rows; i++)
+		double** _NewMatrix = new double* [_cols];
+		for (int i = 0; i < _cols; i++)
 		{
-			_NewMatrix[i] = new double[_cols];
-			for (int j = 0; j < _cols; j++)
+			_NewMatrix[i] = new double[_rows];
+			for (int j = 0; j < _rows; j++)
 			{
-				_NewMatrix[i][j];
+				_NewMatrix[i][j] = _Matrix[j][i];
 			}
 		}
-
+		this->~Matrix();
+		std::swap(_rows, _cols);
+		_Matrix = _NewMatrix;
 	}
 	return *this;
 }
 
 Matrix Matrix::operator+(const Matrix& m) 
 {
+	if (_rows != m._rows || _cols != m._cols)
+	{
+		throw "Sizes of matrices differ";
+	}
 	Matrix tmp(_rows, _cols);
 	for (int i = 0; i < _rows; i++)
 	{
@@ -54,6 +69,10 @@ Matrix Matrix::operator+(const Matrix& m)
 
 Matrix Matrix::operator-(const Matrix& m)
 {
+	if (_rows != m._rows || _cols != m._cols)
+	{
+		throw "Sizes of matrices differ";
+	}
 	Matrix tmp(_rows, _cols);
 	for (int i = 0; i < _rows; i++)
 	{
@@ -65,18 +84,16 @@ Matrix Matrix::operator-(const Matrix& m)
 	return tmp;
 }
 
-Matrix& Matrix::operator=(const Matrix& m)
+Matrix Matrix::operator=(const Matrix& m)
 {
-	if (_rows == m._rows && _cols == m._cols)
+	if (_rows != m._rows || _cols != m._cols)
 	{
-		for (int i = 0; i < _rows; i++)
-		{
-			std::copy(m._Matrix[i], m._Matrix[i] + _cols, _Matrix[i]);
-		}
+		throw "Sizes of matrices differ";
 	}
-	else
-	{
 
+	for (int i = 0; i < _rows; i++)
+	{
+		std::copy(m._Matrix[i], m._Matrix[i] + _cols, _Matrix[i]);
 	}
 	return *this;
 }

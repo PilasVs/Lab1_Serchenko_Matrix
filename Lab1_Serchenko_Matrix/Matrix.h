@@ -4,10 +4,11 @@ class Matrix
 public:
 	int GetRows() const;
 	int GetCols() const;
+	void Randomize() const;
 	Matrix& operator ~();
 	Matrix operator +(const Matrix& m);
 	Matrix operator -(const Matrix& m);
-	Matrix& operator =(const Matrix& m);
+	Matrix operator =(const Matrix& m);
 	double* operator [](int row)const;
 	Matrix(int rows, int cols);
 	Matrix(const Matrix& Matrix);
@@ -18,3 +19,7 @@ private:
 	double** _Matrix = nullptr;
 };
 
+class SquareMatrix :public Matrix
+{
+
+};

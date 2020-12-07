@@ -34,10 +34,7 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <Text Include="Output.txt">
-      <Filter>Resource Files</Filter>
-    </Text>
-    <Text Include="Input.txt">
+    <Text Include="Matrix.txt">
       <Filter>Resource Files</Filter>
     </Text>
   </ItemGroup>
