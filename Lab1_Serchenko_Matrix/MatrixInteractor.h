@@ -1,23 +1,31 @@
 #pragma once
 #include "Matrix.h"
 #include <fstream>
+#include <vector>
 
 class MatrixInteractor
 {
 public:
-	void RunFileMenu();
-	void RunConsoleMenu();
+	int RunFileMenu();
+	int RunConsoleMenu();
+	MatrixInteractor() = default;
+	MatrixInteractor(const MatrixInteractor&) = default;
 	~MatrixInteractor();
 private:
+	void Expand();
 	void MatrixSum();
 	void MatrixSub();
+	void MatrixMul();
 	void MatrixTran();
+	void MatrixDet();
 	void MatrixPrint();
+	void MatrixErase();
+	static Matrix* FactoryMatrix(char t, unsigned int rows, unsigned int cols);
 	std::string _fileName;
 	std::fstream _file;
-	int _quantity = 0;
-	Matrix** _matrixArray = nullptr;
+	std::vector<Matrix*> _matrixVector;
 };
 
-void RunMainMenu();
-
+void Run();
+int  RunMainMenu();
+std::ostream& operator<<(std::ostream& os, const Matrix& dt);

@@ -1,10 +1,16 @@
 #include "MatrixInteractor.h"
 #include <iostream>
+#include <string.h>
 
-void RunMainMenu()
+void Run()
+{
+	setlocale(LC_ALL, "Russian");
+	while (RunMainMenu() != 0);
+}
+
+int RunMainMenu()
 {
 	system("cls");
-	setlocale(LC_ALL, "Russian");
 	std::cout << "Функционал:" << std::endl;
 	std::cout << "1 - Файловый ввод матрицы" << std::endl;
 	std::cout << "2 - Консольный ввод матрицы" << std::endl;
@@ -15,25 +21,35 @@ void RunMainMenu()
 	switch (choice)
 	{
 	case 1:
-		MI.RunFileMenu();
+		while (MI.RunFileMenu() != 0);
 		break;
 	case 2:
-		MI.RunConsoleMenu();
+		while (MI.RunConsoleMenu() != 0);
+		break;
+	default:
+		return 0;
 	}
+	return 1;
 }
 
-void MatrixInteractor::RunFileMenu()
+int MatrixInteractor::RunFileMenu()
 {
-	system("cls");
 	std::cout << "1 - Ввести имя файла и прочитать содержимое" << std::endl;
 	std::cout << "2 - Произвести сложение" << std::endl;
 	std::cout << "3 - Произвести вычитание" << std::endl;
-	std::cout << "4 - Произести транспонирование" << std::endl;
-	std::cout << "5 - Создать новую матрицу" << std::endl;
-	std::cout << "6 - Вывести матрицу на экран" << std::endl;
+	std::cout << "4 - Произвести умножение" << std::endl;
+	std::cout << "5 - Произести транспонирование" << std::endl;
+	std::cout << "6 - Вывести det" << std::endl;
+	std::cout << "7 - Создать новую матрицу" << std::endl;
+	std::cout << "8 - Вывести матрицу на экран" << std::endl;
+	std::cout << "9 - Удалить матрицу" << std::endl;
 	std::cout << "0 - Выйти и вывести данные" << std::endl;
 	int choice;
 	std::cin >> choice;
+	if (!_file.is_open() && choice != 1)
+	{
+		throw std::logic_error("Имя файла не задано");
+	}
 	switch (choice)
 	{
 	case 1:
@@ -47,19 +63,20 @@ void MatrixInteractor::RunFileMenu()
 		_file.open(_fileName, std::ios_base::in);
 		if (!_file.is_open())
 		{
-			throw "Неверное имя файла";
+			throw std::invalid_argument("Неверное имя файла");
 		}
-		_file >> _quantity;
-		_matrixArray = new Matrix * [_quantity];
-		for (int count = 0; count < _quantity; count++)
+		unsigned int quantity;
+		_file >> quantity;
+		for (unsigned int count = 0; count < quantity; count++)
 		{
-			int rows, cols;
-			_file >> rows >> cols;
-			_matrixArray[count] = new Matrix(rows, cols);
+			int rows, cols; char type;
+			_file >> type >> rows >> cols;
+			_matrixVector.push_back(FactoryMatrix(type, rows, cols));
 			for (int i = 0; i < rows; i++)
 			{
-				double* row = (*(_matrixArray[count]))[i];   //Указатель на очередной ряд
-				for (int j = 0; j < cols; j++)
+				double* row = (*_matrixVector.back())[i];   //Указатель на очередной ряд
+				for (int j = 0; j < cols;
+					j++)
 				{
 					_file >> row[j];
 				}
@@ -69,97 +86,75 @@ void MatrixInteractor::RunFileMenu()
 	}
 	case 2:
 	{
-		if (!_file.is_open())
-		{
-			throw "Имя файла не задано";
-		}
 		MatrixSum();
 		break;
 	}
 	case 3:
 	{
-		if (!_file.is_open())
-		{
-			throw "Имя файла не задано";
-		}
 		MatrixSub();
 		break;
 	}
 	case 4:
 	{
-		if (!_file.is_open())
-		{
-			throw "Имя файла не задано";
-		}
-		MatrixTran();
+		MatrixMul();
 		break;
 	}
 	case 5:
 	{
-		if (!_file.is_open())
-		{
-			throw "Имя файла не задано";
-		}
-		int rows, cols;
-		std::cout << "Введите количество рядов" << std::endl;
-		std::cin >> rows;
-		std::cout << "Введите количество колонн" << std::endl;
-		std::cin >> cols;
-		Matrix** tmp = _matrixArray;
-		_matrixArray = new Matrix * [_quantity + 1];
-		std::copy(tmp, tmp + _quantity, _matrixArray);
-		delete[] tmp;
-		_matrixArray[_quantity] = new Matrix(rows, cols);
-		_quantity++;
+		MatrixTran();
 		break;
 	}
 	case 6:
 	{
+		MatrixDet();
+		break;
+	}
+	case 7:
+	{
+		Expand();
+		break;
+	}
+	case 8:
+	{
 		MatrixPrint();
+		break;
+	}
+	case 9:
+	{
+		MatrixErase();
 		break;
 	}
 	case 0:
 	{
 		std::cout << "Введите имя файла приёмника" << std::endl;
 		std::cin >> _fileName;
-		if (_file.is_open())
+		_file.close();
+		_file.open(_fileName, std::ios_base::trunc | std::ios_base::out);
+		if (!_file.is_open())
 		{
-			_file.close();
+			throw std::invalid_argument("Неверное имя файла");
 		}
-		_file.open(_fileName, std::ios_base::trunc || std::ios_base::out);
-		_file << _quantity << std::endl;
-		for (int count = 0; count < _quantity; count++)
+		_file << _matrixVector.size() << std::endl;
+		for (auto elem : _matrixVector)
 		{
-			const Matrix& matrix = *(_matrixArray[count]);
-			int i, j;
-			int rows = matrix.GetRows(), cols = matrix.GetCols();
-			_file << rows << ' ' << cols << std::endl;
-			for (i = 0; i < rows; i++)
-			{
-				double* row = matrix[i];
-				for (j = 0; j < cols - 1; j++)
-				{
-					_file << row[j] << ' ';
-				}
-				_file << row[j] << std::endl;
-			}
+			_file << *(elem);
 		}
-		//this->~MatrixInteractor();
-		RunMainMenu();
-		return;
+		return 0;
 	}
 	}
-	RunFileMenu();
+	return 1;
 }
 
-void MatrixInteractor::RunConsoleMenu()
+int MatrixInteractor::RunConsoleMenu()
 {
-	system("cls");
 	std::cout << "1 - Создать новую матрицу" << std::endl;
 	std::cout << "2 - Произвести сложение " << std::endl;
 	std::cout << "3 - Произвести вычитание" << std::endl;
-	std::cout << "4 - Произести транспонирование" << std::endl;
-	std::cout << "5 - Вывести матрицу на экран" << std::endl;
+	std::cout << "4 - Произвести умножение" << std::endl;
+	std::cout << "5 - Произести транспонирование" << std::endl;
+	std::cout << "6 - Вывести det" << std::endl;
+	std::cout << "7 - Вывести матрицу на экран" << std::endl;
+	std::cout << "8 - Удалить матрицу" << std::endl;
 	std::cout << "0 - Выйти" << std::endl;
 	int choice;
 	std::cin >> choice;
@@ -167,26 +162,7 @@ void MatrixInteractor::RunConsoleMenu()
 	{
 	case 1:
 	{
-		int rows, cols;
-		std::cout << "Введите количество рядов" << std::endl;
-		std::cin >> rows;
-		std::cout << "Введите количество колонн" << std::endl;
-		std::cin >> cols;
-		Matrix** tmp = _matrixArray;
-		_matrixArray = new Matrix * [_quantity + 1];
-		std::copy(tmp, tmp + _quantity, _matrixArray);
-		delete[] tmp;
-		_matrixArray[_quantity] = new Matrix(rows, cols);
-		std::cout << "Введите матрицу " << rows << " на " << cols << std::endl;
-		for (int i = 0; i < rows; i++)
-		{
-			double* row = (*(_matrixArray[_quantity]))[i];   //Указатель на очередной ряд
-			for (int j = 0; j < cols; j++)
-			{
-				std::cin >> row[j];
-			}
-		}
-		_quantity++;
+		Expand();
 		break;
 	}
 	case 2:
@@ -201,21 +177,74 @@ void MatrixInteractor::RunConsoleMenu()
 	}
 	case 4:
 	{
-		MatrixTran();
+		MatrixMul();
 		break;
 	}
 	case 5:
 	{
+		MatrixTran();
+		break;
+	}
+	case 6:
+	{
+		MatrixDet();
+		break;
+	}
+	case 7:
+	{
 		MatrixPrint();
+		break;
+	}
+	case 8:
+	{
+		MatrixErase();
 		break;
 	}
 	case 0:
 	{
-		RunMainMenu();
-		return;
+		return 0;
 	}
 	}
-	RunConsoleMenu();
+	return 1;
+}
+
+void MatrixInteractor::Expand()
+{
+	int rows, cols; char type;
+	std::cout << "Введите тип матрицы('M','S')" << std::endl;
+	std::cin >> type;
+	switch (type)
+	{
+	case 'M':
+	{
+		std::cout << "Введите количество рядов" << std::endl;
+		std::cin >> rows;
+		std::cout << "Введите количество колонн" << std::endl;
+		std::cin >> cols;
+		break;
+	}
+	case 'S':
+	{
+		std::cout << "Введите размерность" << std::endl;
+		std::cin >> rows;
+		cols = rows;
+		break;
+	}
+	default:
+	{
+		throw std::invalid_argument("Неверный тип");
+	}
+	}
+	_matrixVector.push_back(FactoryMatrix(type, rows, cols));
+	std::cout << "Введите матрицу " << rows << " на " << cols << std::endl;
+	for (int i = 0; i < rows; i++)
+	{
+		double* row = (*_matrixVector.back())[i];   //Указатель на очередной ряд
+		for (int j = 0; j < cols; j++)
+		{
+			std::cin >> row[j];
+		}
+	}
 }
 
 void MatrixInteractor::MatrixSum()
@@ -227,7 +256,7 @@ void MatrixInteractor::MatrixSum()
 	std::cin >> second;
 	std::cout << "Введите номер результирующей матрицы" << std::endl;
 	std::cin >> result;
-	*(_matrixArray[result]) = *(_matrixArray[first]) + *(_matrixArray[second]);
+	*(_matrixVector[result]) = *(_matrixVector[first]) + *(_matrixVector[second]);
 }
 
 void MatrixInteractor::MatrixSub()
@@ -239,41 +268,96 @@ void MatrixInteractor::MatrixSub()
 	std::cin >> second;
 	std::cout << "Введите номер результирующей матрицы" << std::endl;
 	std::cin >> result;
-	*(_matrixArray[result]) = *(_matrixArray[first]) - *(_matrixArray[second]);
+	*(_matrixVector[result]) = *(_matrixVector[first]) - *(_matrixVector[second]);
+}
+
+void MatrixInteractor::MatrixMul()
+{
+	int first, second, result;
+	std::cout << "Введите номер первой матрицы" << std::endl;
+	std::cin >> first;
+	std::cout << "Введите номер второй матрицы" << std::endl;
+	std::cin >> second;
+	std::cout << "Введите номер результирующей матрицы" << std::endl;
+	std::cin >> result;
+	*(_matrixVector[result]) = *(_matrixVector[first]) * *(_matrixVector[second]);
 }
 
 void MatrixInteractor::MatrixTran()
 {
-	int num;
+	int No;
 	std::cout << "Введите номер матрицы" << std::endl;
-	std::cin >> num;
-	~(*(_matrixArray[num]));
+	std::cin >> No;
+	~(*(_matrixVector[No]));
+}
+
+void MatrixInteractor::MatrixDet()
+{
+	int No;
+	std::cout << "Введите номер матрицы" << std::endl;
+	std::cin >> No;
+	std::cout << ((SquareMatrix)(*(_matrixVector[No]))).Det() << std::endl;
 }
 
 void MatrixInteractor::MatrixPrint()
 {
-	int num;
+	int No;
 	std::cout << "Введите номер матрицы" << std::endl;
-	std::cin >> num;
-	int rows = (*(_matrixArray[num])).GetRows(), cols = (*(_matrixArray[num])).GetCols();
-	for (int i = 0; i < rows; i++)
+	std::cin >> No;
+	std::cout << *(_matrixVector[No]);
+}
+
+void MatrixInteractor::MatrixErase()
+{
+	int No;
+	std::cout << "Введите номер матрицы" << std::endl;
+	std::cin >> No;
+	std::vector<Matrix*>::iterator it = _matrixVector.begin() + No;
+	delete (*it);
+	_matrixVector.erase(it);
+}
+
+Matrix* MatrixInteractor::FactoryMatrix(char type, unsigned int rows, unsigned int cols)
+{
+	switch (type)
 	{
-		double* row = (*(_matrixArray[num]))[i];   //Указатель на очередной ряд
-		for (int j = 0; j < cols; j++)
-		{
-			std::cout << row[j] << ' ';
-		}
-		std::cout << '\n';
+	case 'M':
+		return new Matrix(rows, cols);
+	case 'S':
+		return new SquareMatrix(rows);
+	default:
+		return NULL;
 	}
 }
 
 MatrixInteractor::~MatrixInteractor()
 {
-	for (int i = 0; i < _quantity; i++)
+	for (auto elem : _matrixVector)
 	{
-		delete _matrixArray[i];
+		delete elem;
+	}
+}
+
+std::ostream& operator<<(std::ostream& os, const Matrix& m)
+{
+	int i, j;
+	int rows = m.GetRows(), cols = m.GetCols();
+	if (rows == 0 || cols == 0)
+	{
+		throw "0 dimension matrix";
 	}
 
-	delete[] _matrixArray;
-	_file.close();
+	char type; if (typeid(m).name()[6] == 'M') type = 'M';else type = 'S';
+
+	os << type << ' ' << rows << ' ' << cols << std::endl;
+	for (i = 0; i < rows; i++)
+	{
+		double* row = m[i];
+		for (j = 0; j < cols - 1; j++)
+		{
+			os << row[j] << ' ';
+		}
+		os << row[j] << std::endl;
+	}
+	return os;
 }
