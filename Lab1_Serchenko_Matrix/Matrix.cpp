@@ -21,6 +21,15 @@ void Matrix::Randomize() const
 	}
 }
 
+Matrix* Matrix::FactoryMatrix(unsigned int rows, unsigned int cols)
+{
+	if (rows == cols)
+	{
+		return new SquareMatrix(rows);
+	}
+	return new Matrix(rows, cols);
+}
+
 Matrix& Matrix::operator~()
 {
 	double** _NewMatrix = new double* [_cols];
@@ -61,6 +70,7 @@ Matrix Matrix::operator-(const Matrix& m)
 	{
 		throw std::length_error("Sizes of matrices differ");
 	}
+
 	Matrix tmp(_rows, _cols);
 	for (unsigned int i = 0; i < _rows; i++)
 	{
@@ -171,6 +181,30 @@ Matrix& SquareMatrix::operator~()
 	return *this;
 }
 
+double SquareMatrix::Det()
+{
+	double D = 0, n = this->GetRows();
+	if (n == 1)
+	{
+		return (*this)[0][0];
+
+	}
+
+	SquareMatrix* tmp = new SquareMatrix(n - 1);
+
+	int sign = 1;
+	for (int f = 0; f < n; f++)
+	{
+		getCofactor(this, tmp, 0, f);
+		D += sign * (*this)[0][f] * (*tmp).Det();
+
+		sign = -sign;
+	}
+	delete tmp;
+
+	return D;
+}
+
 void SquareMatrix::getCofactor(SquareMatrix* sm, SquareMatrix* tmp, int excessRow, int excessCol)
 {
 	int i = 0, j = 0, n = (*sm).GetRows();
@@ -189,26 +223,4 @@ void SquareMatrix::getCofactor(SquareMatrix* sm, SquareMatrix* tmp, int excessRo
 			}
 		}
 	}
-}
-
-int SquareMatrix::Det()
-{
-	int D = 0, n = this->GetRows();
-	if (n == 1)
-		return *this[0][0];
-
-	SquareMatrix* tmp = new SquareMatrix(n - 1);
-
-	int sign = 1;
-	for (int f = 0; f < n; f++)
-	{
-		getCofactor(this, tmp, 0, f);
-		D += sign * (*this)[0][f]
-			* (*tmp).Det();
-
-		sign = -sign;
-	}
-	delete tmp;
-
-	return D;
 }

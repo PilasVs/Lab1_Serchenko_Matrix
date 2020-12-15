@@ -5,6 +5,7 @@ public:
 	int GetRows() const;
 	int GetCols() const;
 	void Randomize() const;
+	static Matrix* FactoryMatrix(unsigned int rows, unsigned int cols);
 	virtual Matrix& operator ~();
 	Matrix operator +(const Matrix& m);
 	Matrix operator -(const Matrix& m);
@@ -13,7 +14,7 @@ public:
 	double* operator [](unsigned int row)const;
 	Matrix(unsigned int rows, unsigned int cols);
 	Matrix(const Matrix& m);
-	virtual ~Matrix();
+	~Matrix();
 protected:
 	unsigned int _rows = 0;
 	unsigned int _cols = 0;
@@ -23,10 +24,11 @@ protected:
 class SquareMatrix :public Matrix
 {
 public:
+	Matrix& operator ~() override;
+	double Det();
 	SquareMatrix(unsigned int rowscols);
 	SquareMatrix(const Matrix& m);
-	Matrix& operator ~() override;
-	int Det();
+	~SquareMatrix() = default;
 private:
 	void getCofactor(SquareMatrix* sm, SquareMatrix* tmp, int excessRow, int excessCol);
 };

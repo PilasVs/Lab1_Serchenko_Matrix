@@ -20,7 +20,6 @@ private:
 	void MatrixDet();
 	void MatrixPrint();
 	void MatrixErase();
-	static Matrix* FactoryMatrix(char t, unsigned int rows, unsigned int cols);
 	std::string _fileName;
 	std::fstream _file;
 	std::vector<Matrix*> _matrixVector;

@@ -1,6 +1,17 @@
 #include "MatrixInteractor.h"
 #include <iostream>
-#include <string.h>
+#define Check(No) No >= _matrixVector.size() || No < 0
+#define ScanCheck3(first, second, result) \
+	std::cout << "¬ведите номер первой матрицы" << std::endl;\
+	std::cin >> first;\
+	std::cout << "¬ведите номер второй матрицы" << std::endl;\
+	std::cin >> second;\
+	std::cout << "¬ведите номер результирующей матрицы" << std::endl;\
+	std::cin >> result;\
+	if(Check(first) || Check(second) || Check(result))throw std::out_of_range("Wrong Parameters");
+#define ScanCheck1(No) std::cout << "¬ведите номер матрицы" << std::endl;\
+	std::cin >> No;\
+	if(Check(No)) throw std::out_of_range("Wrong Parameters");\
 
 void Run()
 {
@@ -69,9 +80,9 @@ int MatrixInteractor::RunFileMenu()
 		_file >> quantity;
 		for (unsigned int count = 0; count < quantity; count++)
 		{
-			int rows, cols; char type;
-			_file >> type >> rows >> cols;
-			_matrixVector.push_back(FactoryMatrix(type, rows, cols));
+			int rows, cols;
+			_file >> rows >> cols;
+			_matrixVector.push_back(Matrix::FactoryMatrix(rows, cols));
 			for (int i = 0; i < rows; i++)
 			{
 				double* row = (*_matrixVector.back())[i];   //”казатель на очередной р€д
@@ -210,32 +221,12 @@ int MatrixInteractor::RunConsoleMenu()
 
 void MatrixInteractor::Expand()
 {
-	int rows, cols; char type;
-	std::cout << "¬ведите тип матрицы('M','S')" << std::endl;
-	std::cin >> type;
-	switch (type)
-	{
-	case 'M':
-	{
-		std::cout << "¬ведите количество р€дов" << std::endl;
-		std::cin >> rows;
-		std::cout << "¬ведите количество колонн" << std::endl;
-		std::cin >> cols;
-		break;
-	}
-	case 'S':
-	{
-		std::cout << "¬ведите размерность" << std::endl;
-		std::cin >> rows;
-		cols = rows;
-		break;
-	}
-	default:
-	{
-		throw std::invalid_argument("Ќеверный тип");
-	}
-	}
-	_matrixVector.push_back(FactoryMatrix(type, rows, cols));
+	int rows, cols;
+	std::cout << "¬ведите количество р€дов" << std::endl;
+	std::cin >> rows;
+	std::cout << "¬ведите количество колонн" << std::endl;
+	std::cin >> cols;
+	_matrixVector.push_back(Matrix::FactoryMatrix(rows, cols));
 	std::cout << "¬ведите матрицу " << rows << " на " << cols << std::endl;
 	for (int i = 0; i < rows; i++)
 	{
@@ -250,84 +241,52 @@ void MatrixInteractor::Expand()
 void MatrixInteractor::MatrixSum()
 {
 	int first, second, result;
-	std::cout << "¬ведите номер первой матрицы" << std::endl;
-	std::cin >> first;
-	std::cout << "¬ведите номер второй матрицы" << std::endl;
-	std::cin >> second;
-	std::cout << "¬ведите номер результирующей матрицы" << std::endl;
-	std::cin >> result;
+	ScanCheck3(first, second, result)
 	*(_matrixVector[result]) = *(_matrixVector[first]) + *(_matrixVector[second]);
 }
 
 void MatrixInteractor::MatrixSub()
 {
 	int first, second, result;
-	std::cout << "¬ведите номер первой матрицы" << std::endl;
-	std::cin >> first;
-	std::cout << "¬ведите номер второй матрицы" << std::endl;
-	std::cin >> second;
-	std::cout << "¬ведите номер результирующей матрицы" << std::endl;
-	std::cin >> result;
+	ScanCheck3(first, second, result)
 	*(_matrixVector[result]) = *(_matrixVector[first]) - *(_matrixVector[second]);
 }
 
 void MatrixInteractor::MatrixMul()
 {
 	int first, second, result;
-	std::cout << "¬ведите номер первой матрицы" << std::endl;
-	std::cin >> first;
-	std::cout << "¬ведите номер второй матрицы" << std::endl;
-	std::cin >> second;
-	std::cout << "¬ведите номер результирующей матрицы" << std::endl;
-	std::cin >> result;
+	ScanCheck3(first, second, result)
 	*(_matrixVector[result]) = *(_matrixVector[first]) * *(_matrixVector[second]);
 }
 
 void MatrixInteractor::MatrixTran()
 {
 	int No;
-	std::cout << "¬ведите номер матрицы" << std::endl;
-	std::cin >> No;
+	ScanCheck1(No)
 	~(*(_matrixVector[No]));
 }
 
 void MatrixInteractor::MatrixDet()
 {
 	int No;
-	std::cout << "¬ведите номер матрицы" << std::endl;
-	std::cin >> No;
+	ScanCheck1(No)
 	std::cout << ((SquareMatrix)(*(_matrixVector[No]))).Det() << std::endl;
 }
 
 void MatrixInteractor::MatrixPrint()
 {
 	int No;
-	std::cout << "¬ведите номер матрицы" << std::endl;
-	std::cin >> No;
+	ScanCheck1(No)
 	std::cout << *(_matrixVector[No]);
 }
 
 void MatrixInteractor::MatrixErase()
 {
 	int No;
-	std::cout << "¬ведите номер матрицы" << std::endl;
-	std::cin >> No;
+	ScanCheck1(No)
 	std::vector<Matrix*>::iterator it = _matrixVector.begin() + No;
 	delete (*it);
 	_matrixVector.erase(it);
-}
-
-Matrix* MatrixInteractor::FactoryMatrix(char type, unsigned int rows, unsigned int cols)
-{
-	switch (type)
-	{
-	case 'M':
-		return new Matrix(rows, cols);
-	case 'S':
-		return new SquareMatrix(rows);
-	default:
-		return NULL;
-	}
 }
 
 MatrixInteractor::~MatrixInteractor()
@@ -342,14 +301,12 @@ std::ostream& operator<<(std::ostream& os, const Matrix& m)
 {
 	int i, j;
 	int rows = m.GetRows(), cols = m.GetCols();
+
+	os << rows << ' ' << cols << std::endl;
 	if (rows == 0 || cols == 0)
 	{
-		throw "0 dimension matrix";
+		return os;
 	}
-
-	char type; if (typeid(m).name()[6] == 'M') type = 'M';else type = 'S';
-
-	os << type << ' ' << rows << ' ' << cols << std::endl;
 	for (i = 0; i < rows; i++)
 	{
 		double* row = m[i];
