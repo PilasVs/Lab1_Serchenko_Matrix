@@ -4,14 +4,13 @@ class Matrix
 public:
 	int GetRows() const;
 	int GetCols() const;
-	void Randomize() const;
-	static Matrix* FactoryMatrix(unsigned int rows, unsigned int cols);
+	//void Randomize() const;
 	virtual Matrix& operator ~();
-	Matrix operator +(const Matrix& m);
-	Matrix operator -(const Matrix& m);
-	Matrix operator =(const Matrix& m);
-	Matrix operator *(const Matrix& m);
-	double* operator [](unsigned int row)const;
+	Matrix operator +(const Matrix& m) const;
+	Matrix operator -(const Matrix& m) const;
+	Matrix operator =(const Matrix& m) const;
+	Matrix operator *(const Matrix& m) const;
+	double* operator [](unsigned int row) const;
 	Matrix(unsigned int rows, unsigned int cols);
 	Matrix(const Matrix& m);
 	~Matrix();
@@ -25,10 +24,16 @@ class SquareMatrix :public Matrix
 {
 public:
 	Matrix& operator ~() override;
-	double Det();
+	double Det() const;
 	SquareMatrix(unsigned int rowscols);
 	SquareMatrix(const Matrix& m);
 	~SquareMatrix() = default;
 private:
-	void getCofactor(SquareMatrix* sm, SquareMatrix* tmp, int excessRow, int excessCol);
+	void getCofactor(const SquareMatrix* sm, SquareMatrix* tmp, int excessRow, int excessCol) const;
+};
+
+class FactoryMatrix 
+{
+public:
+	static Matrix* CreateMatrix(unsigned int rows, unsigned int cols);
 };

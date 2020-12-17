@@ -1,5 +1,6 @@
 #include "MatrixInteractor.h"
 #include <vld.h>
+#include <iostream>
 
 int main()
 {
@@ -8,8 +9,8 @@ int main()
 	}
 	catch (std::exception e) {
 		std::cout << e.what() << std::endl;
+		getchar(); getchar();
 	}
-	getchar(); getchar();
 
 	return 0;
 }

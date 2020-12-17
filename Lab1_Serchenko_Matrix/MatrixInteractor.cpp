@@ -1,6 +1,6 @@
 #include "MatrixInteractor.h"
 #include <iostream>
-#define Check(No) No >= _matrixVector.size() || No < 0
+#define Check(No) No >= _matrixVector.size()
 #define ScanCheck3(first, second, result) \
 	std::cout << "Введите номер первой матрицы" << std::endl;\
 	std::cin >> first;\
@@ -11,7 +11,7 @@
 	if(Check(first) || Check(second) || Check(result))throw std::out_of_range("Wrong Parameters");
 #define ScanCheck1(No) std::cout << "Введите номер матрицы" << std::endl;\
 	std::cin >> No;\
-	if(Check(No)) throw std::out_of_range("Wrong Parameters");\
+	if(Check(No)) throw std::out_of_range("Wrong Parameters");
 
 void Run()
 {
@@ -53,7 +53,9 @@ int MatrixInteractor::RunFileMenu()
 	std::cout << "6 - Вывести det" << std::endl;
 	std::cout << "7 - Создать новую матрицу" << std::endl;
 	std::cout << "8 - Вывести матрицу на экран" << std::endl;
-	std::cout << "9 - Удалить матрицу" << std::endl;
+	std::cout << "9 - Показать номера матриц по размерности" << std::endl;
+	std::cout << "10 - Показать номера матриц по det" << std::endl;
+	std::cout << "11 - Удалить матрицу" << std::endl;
 	std::cout << "0 - Выйти и вывести данные" << std::endl;
 	int choice;
 	std::cin >> choice;
@@ -80,18 +82,7 @@ int MatrixInteractor::RunFileMenu()
 		_file >> quantity;
 		for (unsigned int count = 0; count < quantity; count++)
 		{
-			int rows, cols;
-			_file >> rows >> cols;
-			_matrixVector.push_back(Matrix::FactoryMatrix(rows, cols));
-			for (int i = 0; i < rows; i++)
-			{
-				double* row = (*_matrixVector.back())[i];   //Указатель на очередной ряд
-				for (int j = 0; j < cols;
-					j++)
-				{
-					_file >> row[j];
-				}
-			}
+			Expand(_file, false);
 		}
 		break;
 	}
@@ -122,7 +113,7 @@ int MatrixInteractor::RunFileMenu()
 	}
 	case 7:
 	{
-		Expand();
+		Expand(std::cin, true);
 		break;
 	}
 	case 8:
@@ -131,6 +122,16 @@ int MatrixInteractor::RunFileMenu()
 		break;
 	}
 	case 9:
+	{
+		MatrixFindNo();
+		break;
+	}
+	case 10:
+	{
+		MatrixFindDet();
+		break;
+	}
+	case 11:
 	{
 		MatrixErase();
 		break;
@@ -148,7 +149,7 @@ int MatrixInteractor::RunFileMenu()
 		_file << _matrixVector.size() << std::endl;
 		for (auto elem : _matrixVector)
 		{
-			_file << *(elem);
+			_file << *elem;
 		}
 		return 0;
 	}
@@ -165,7 +166,9 @@ int MatrixInteractor::RunConsoleMenu()
 	std::cout << "5 - Произести транспонирование" << std::endl;
 	std::cout << "6 - Вывести det" << std::endl;
 	std::cout << "7 - Вывести матрицу на экран" << std::endl;
-	std::cout << "8 - Удалить матрицу" << std::endl;
+	std::cout << "8 - Показать номера матриц по размерности" << std::endl;
+	std::cout << "9 - Показать номера матриц по det" << std::endl;
+	std::cout << "10 - Удалить матрицу" << std::endl;
 	std::cout << "0 - Выйти" << std::endl;
 	int choice;
 	std::cin >> choice;
@@ -173,7 +176,7 @@ int MatrixInteractor::RunConsoleMenu()
 	{
 	case 1:
 	{
-		Expand();
+		Expand(std::cin, true);
 		break;
 	}
 	case 2:
@@ -208,6 +211,16 @@ int MatrixInteractor::RunConsoleMenu()
 	}
 	case 8:
 	{
+		MatrixFindNo();
+		break;
+	}
+	case 9:
+	{
+		MatrixFindDet();
+		break;
+	}
+	case 10:
+	{
 		MatrixErase();
 		break;
 	}
@@ -219,74 +232,155 @@ int MatrixInteractor::RunConsoleMenu()
 	return 1;
 }
 
-void MatrixInteractor::Expand()
+void MatrixInteractor::Expand(std::istream& is, bool prompt)
 {
-	int rows, cols;
-	std::cout << "Введите количество рядов" << std::endl;
-	std::cin >> rows;
-	std::cout << "Введите количество колонн" << std::endl;
-	std::cin >> cols;
-	_matrixVector.push_back(Matrix::FactoryMatrix(rows, cols));
-	std::cout << "Введите матрицу " << rows << " на " << cols << std::endl;
-	for (int i = 0; i < rows; i++)
+	unsigned int rows, cols;
+	if (prompt)std::cout << "Введите количество рядов" << std::endl;
+	is >> rows;
+	if (prompt)std::cout << "Введите количество колонн" << std::endl;
+	is >> cols;
+
+	_mapNo[std::pair<unsigned int, unsigned  int>(rows, cols)].insert(_matrixVector.size());
+
+	_matrixVector.push_back(FactoryMatrix::CreateMatrix(rows, cols));
+	if (prompt)std::cout << "Введите матрицу " << rows << " на " << cols << std::endl;
+	for (unsigned int i = 0; i < rows; i++)
 	{
 		double* row = (*_matrixVector.back())[i];   //Указатель на очередной ряд
-		for (int j = 0; j < cols; j++)
+		for (unsigned int j = 0; j < cols; j++)
 		{
-			std::cin >> row[j];
+			is >> row[j];
 		}
+	}
+
+	if (rows == cols)
+	{
+		_mapDet[((SquareMatrix)(*(_matrixVector.back()))).Det()].insert(_matrixVector.size() - 1);
 	}
 }
 
 void MatrixInteractor::MatrixSum()
 {
-	int first, second, result;
+	unsigned int first, second, result, rows, cols;
 	ScanCheck3(first, second, result)
+	rows = _matrixVector[result]->GetRows();
+	cols = _matrixVector[result]->GetCols();
+
+	if (rows == cols)
+	{
+		_mapDet[((SquareMatrix)(*(_matrixVector[result]))).Det()].erase(result);
+	}
+
 	*(_matrixVector[result]) = *(_matrixVector[first]) + *(_matrixVector[second]);
+
+	if (rows == cols)
+	{
+		_mapDet[((SquareMatrix)(*(_matrixVector[result]))).Det()].insert(result);
+	}
 }
 
 void MatrixInteractor::MatrixSub()
 {
-	int first, second, result;
+	unsigned int first, second, result, rows, cols;
 	ScanCheck3(first, second, result)
+	rows = _matrixVector[result]->GetRows();
+	cols = _matrixVector[result]->GetCols();
+
+	if (rows == cols)
+	{
+		_mapDet[((SquareMatrix)(*(_matrixVector[result]))).Det()].erase(result);
+	}
+
 	*(_matrixVector[result]) = *(_matrixVector[first]) - *(_matrixVector[second]);
+
+	if (rows == cols)
+	{
+		_mapDet[((SquareMatrix)(*(_matrixVector[result]))).Det()].insert(result);
+	}
 }
 
 void MatrixInteractor::MatrixMul()
 {
-	int first, second, result;
+	unsigned int first, second, result, rows, cols;
 	ScanCheck3(first, second, result)
+	rows = _matrixVector[result]->GetRows();
+	cols = _matrixVector[result]->GetCols();
+
+	if (rows == cols)
+	{
+		_mapDet[((SquareMatrix)(*(_matrixVector[result]))).Det()].erase(result);
+	}
+
 	*(_matrixVector[result]) = *(_matrixVector[first]) * *(_matrixVector[second]);
+
+	if (rows == cols)
+	{
+		_mapDet[((SquareMatrix)(*(_matrixVector[result]))).Det()].insert(result);
+	}
 }
 
 void MatrixInteractor::MatrixTran()
 {
-	int No;
+	unsigned int No;
 	ScanCheck1(No)
 	~(*(_matrixVector[No]));
 }
 
 void MatrixInteractor::MatrixDet()
 {
-	int No;
+	unsigned int No;
 	ScanCheck1(No)
 	std::cout << ((SquareMatrix)(*(_matrixVector[No]))).Det() << std::endl;
 }
 
 void MatrixInteractor::MatrixPrint()
 {
-	int No;
+	unsigned int No;
 	ScanCheck1(No)
 	std::cout << *(_matrixVector[No]);
 }
 
+void MatrixInteractor::MatrixFindNo()
+{
+	unsigned int rows, cols;
+	std::cout << "Введите количество рядов" << std::endl;
+	std::cin >> rows;
+	std::cout << "Введите количество колонн" << std::endl;
+	std::cin >> cols;
+	for (auto elem : _mapNo[std::pair<unsigned int, unsigned  int>(rows, cols)])
+	{
+		std::cout << elem << ' ';
+	}
+	std::cout << std::endl;
+}
+
+void MatrixInteractor::MatrixFindDet()
+{
+	double det;
+	std::cout << "Введите значение det" << std::endl;
+	std::cin >> det;
+	for (auto elem : _mapDet[det])
+	{
+		std::cout << elem << ' ';
+	}
+	std::cout << std::endl;
+}
+
 void MatrixInteractor::MatrixErase()
 {
-	int No;
+	unsigned int No;
 	ScanCheck1(No)
-	std::vector<Matrix*>::iterator it = _matrixVector.begin() + No;
-	delete (*it);
-	_matrixVector.erase(it);
+	std::vector<Matrix*>::iterator vecIt = _matrixVector.begin() + No;
+	unsigned int rows = (*vecIt)->GetRows(), cols = (*vecIt)->GetCols();
+
+	_mapNo[std::pair<unsigned int, unsigned  int>(rows, cols)].erase(No);
+	if (rows == cols)
+	{
+		_mapDet[((SquareMatrix)(**vecIt)).Det()].erase(No);
+	}
+
+	delete (*vecIt);
+	_matrixVector.erase(vecIt);
 }
 
 MatrixInteractor::~MatrixInteractor()

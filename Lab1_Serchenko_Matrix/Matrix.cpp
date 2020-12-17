@@ -10,7 +10,7 @@ int Matrix::GetCols() const {
 	return _cols;
 }
 
-void Matrix::Randomize() const
+/*void Matrix::Randomize() const
 {
 	for (unsigned int i = 0; i < _rows; i++)
 	{
@@ -19,16 +19,7 @@ void Matrix::Randomize() const
 			_Matrix[i][j] = std::rand() % 10;
 		}
 	}
-}
-
-Matrix* Matrix::FactoryMatrix(unsigned int rows, unsigned int cols)
-{
-	if (rows == cols)
-	{
-		return new SquareMatrix(rows);
-	}
-	return new Matrix(rows, cols);
-}
+}*/
 
 Matrix& Matrix::operator~()
 {
@@ -47,7 +38,7 @@ Matrix& Matrix::operator~()
 	return *this;
 }
 
-Matrix Matrix::operator+(const Matrix& m) 
+Matrix Matrix::operator+(const Matrix& m) const
 {
 	if (_rows != m._rows || _cols != m._cols)
 	{
@@ -64,7 +55,7 @@ Matrix Matrix::operator+(const Matrix& m)
 	return tmp;
 }
 
-Matrix Matrix::operator-(const Matrix& m)
+Matrix Matrix::operator-(const Matrix& m) const
 {
 	if (_rows != m._rows || _cols != m._cols)
 	{
@@ -82,7 +73,7 @@ Matrix Matrix::operator-(const Matrix& m)
 	return tmp;
 }
 
-Matrix Matrix::operator=(const Matrix& m)
+Matrix Matrix::operator=(const Matrix& m) const
 {
 	if (_rows != m._rows || _cols != m._cols)
 	{
@@ -96,7 +87,7 @@ Matrix Matrix::operator=(const Matrix& m)
 	return *this;
 }
 
-Matrix Matrix::operator*(const Matrix& m)
+Matrix Matrix::operator*(const Matrix& m) const
 {
 	if (_cols != m._rows)
 	{
@@ -181,9 +172,14 @@ Matrix& SquareMatrix::operator~()
 	return *this;
 }
 
-double SquareMatrix::Det()
+double SquareMatrix::Det() const
 {
 	double D = 0, n = this->GetRows();
+	if (n == 0)
+	{
+		return 0;
+
+	}
 	if (n == 1)
 	{
 		return (*this)[0][0];
@@ -205,7 +201,7 @@ double SquareMatrix::Det()
 	return D;
 }
 
-void SquareMatrix::getCofactor(SquareMatrix* sm, SquareMatrix* tmp, int excessRow, int excessCol)
+void SquareMatrix::getCofactor(const SquareMatrix* sm, SquareMatrix* tmp, int excessRow, int excessCol) const
 {
 	int i = 0, j = 0, n = (*sm).GetRows();
 	for (int row = 0; row < n; row++)
@@ -223,4 +219,13 @@ void SquareMatrix::getCofactor(SquareMatrix* sm, SquareMatrix* tmp, int excessRo
 			}
 		}
 	}
+}
+
+Matrix* FactoryMatrix::CreateMatrix(unsigned int rows, unsigned int cols)
+{
+	if (rows == cols)
+	{
+		return new SquareMatrix(rows);
+	}
+	return new Matrix(rows, cols);
 }
